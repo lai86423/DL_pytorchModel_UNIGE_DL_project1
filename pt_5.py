@@ -15,15 +15,6 @@ print(ROOT)                 # print content of ROOT (Optional)
 
 drive.mount(ROOT)    
 
-# %cd '/content/drive/My Drive/UNIGE/Course/Deep Learning/final project/'
-# %pwd
-
-# Commented out IPython magic to ensure Python compatibility.
-# %cd /content/drive/My Drive/UNIGE/Course/Deep Learning/final project/
-
-# Commented out IPython magic to ensure Python compatibility.
-# %ls
-
 # Clone github repository setup
 # import join used to join ROOT path and MY_GOOGLE_DRIVE_PATH
 from os.path import join  
