@@ -36,6 +36,7 @@ def train_model(model, train_input, train_target, mini_batch_size):
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr=η, momentum=0.3)
     # print("Size = ", train_input.size(), train_target.size())
+    acc_loss = 0
     for b in range(0, train_input.size(0), mini_batch_size):
         #--------------
           # torch.narrow(input, dim, start, length) → Tensor
@@ -43,11 +44,12 @@ def train_model(model, train_input, train_target, mini_batch_size):
         # print("train_input.narrow",train_input.narrow(0, b, mini_batch_size).size())
         output = model(train_input.narrow(0, b, mini_batch_size))#表示取出train_input中第0维上索引从b开始到index+mini_batch_size-1的所有元素
         loss = criterion(output, train_target.narrow(0, b, mini_batch_size))
+        acc_loss = acc_loss + loss.item()
         model.zero_grad()
         loss.backward()
         optimizer.step()
 
-    return model, loss
+    return model, acc_loss
 
 import dlc_practical_prologue as prologue
 N = 1000
@@ -88,15 +90,14 @@ mini_batch_size = 5
 nb_epochs =30
 #print(train_input, train_target)
 for e in range(nb_epochs):
+  
     #print(train_input_1, train_classes_1)
     model, acc_loss = train_model(model, train_input_1, train_classes_1, mini_batch_size)
 
     acc = compute_nb_errors(model, test_input_1, test_classes_1, mini_batch_size)
-    print('epoch :', e, ' loss :', round(acc_loss.item()))
+    print('epoch :', e, ' loss :', round(acc_loss))
     print('acc : ', acc)
     print('----------')
-
-
 
 model1 = Net()
 model2 = Net()
