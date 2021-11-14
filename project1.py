@@ -59,14 +59,13 @@ test_data = data[3:]
 
 train_input, train_target, train_classes = train_data[0], train_data[1], train_data[2]
 test_input, test_target, test_classes = test_data[0], test_data[1], test_data[2]
-print(train_data[0].size(), train_data[1].size(), train_data[2].size())
+print(train_input.size(), train_target.size(), train_classes.size())
 
 train_input_1 =  train_input[:,0].unsqueeze(1)
 train_input_2 =  train_input[:,1].unsqueeze(1)
 train_classes_1 =  train_classes[:,0]
 train_classes_2 =  train_classes[:,1]
-print(train_input_1.size(), train_classes_1.size())
-
+train_target_2 =  train_classes[:,1]
 test_input_1 =  test_input[:,0].unsqueeze(1)
 test_input_2 =  test_input[:,1].unsqueeze(1)
 test_classes_1 =  test_classes[:,0]
@@ -75,26 +74,64 @@ print(test_input_1.size(), test_classes_1.size(),test_classes_1[1])
 
 def compute_nb_errors(model, data_input, data_target, mini_batch_size):
   error = 0
+  output_class = torch.ones(data_input.size(0))
   for b in range(0, data_input.size(0), mini_batch_size): 
     output = model(data_input.narrow(0, b, mini_batch_size))
+    
     for i in range(mini_batch_size): 
-      # print("output = ", output[i], output[i].size(), torch.argmax(output[i]),data_target[b+i])
-      if torch.argmax(output[i]) != data_target[b+i]:
+      output_class[b+i] = torch.argmax(output[i])
+      if output_class[b+i] != data_target[b+i]:
         error += 1
   acc = 1 - (error/data_input.size(0))
-  return acc
+  return acc, output_class
 
 model = Net()
 η = 0.002 #If it too big, it will fail!
-mini_batch_size = 5
+mini_batch_size = 50
 nb_epochs =30
 #print(train_input, train_target)
 for e in range(nb_epochs):
   
     #print(train_input_1, train_classes_1)
     model, acc_loss = train_model(model, train_input_1, train_classes_1, mini_batch_size)
+    acc, output_class_1 = compute_nb_errors(model, test_input_1, test_classes_1, mini_batch_size)
+    print('epoch :', e, ' loss :', round(acc_loss))
+    print('acc : ', acc)
+    print('----------')
 
-    acc = compute_nb_errors(model, test_input_1, test_classes_1, mini_batch_size)
+for e in range(nb_epochs):
+    model, acc_loss = train_model(model, train_input_2, train_classes_2, mini_batch_size)
+    acc, output_class_2 = compute_nb_errors(model, test_input_2, test_classes_2, mini_batch_size)
+    print('epoch :', e, ' loss :', round(acc_loss))
+    print('acc : ', acc)
+    print('----------')
+
+def compute_num_errors(data_input1, data_input2, data_target, mini_batch_size):
+  error = 0
+  for b in range(0, data_input.size(0), mini_batch_size): 
+    for i in range(mini_batch_size): 
+      
+      if torch.argmax(output[i]) != data_target[b+i]:
+        error += 1
+  acc = 1 - (error/data_input.size(0))
+  return acc
+
+def predict_target(data_output1, data_output2):
+  output = torch.ones(len(data_output1))
+  for i in range(len(data_output1)):
+    #print(data_output1[i])
+    if data_output1[i].item() > data_output2[i].item():
+        output[i] = 0
+    else:
+        output[i] = 1
+  return output
+
+target_output = predict_target(output_class_1, output_class_2)
+print(target_output, target_output.size())
+
+for e in range(nb_epochs):
+    model, acc_loss = train_model(model, train_input_2, train_classes_2, mini_batch_size)
+    acc = compute_nb_errors(model, test_input_2, test_classes_2, mini_batch_size)
     print('epoch :', e, ' loss :', round(acc_loss))
     print('acc : ', acc)
     print('----------')
@@ -148,3 +185,4 @@ class Net2(nn.Module):
         x2 = self.fc2(x2)
         y = [x1, x2]
         return y
+
