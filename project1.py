@@ -65,7 +65,6 @@ train_input_1 =  train_input[:,0].unsqueeze(1)
 train_input_2 =  train_input[:,1].unsqueeze(1)
 train_classes_1 =  train_classes[:,0]
 train_classes_2 =  train_classes[:,1]
-train_target_2 =  train_classes[:,1]
 test_input_1 =  test_input[:,0].unsqueeze(1)
 test_input_2 =  test_input[:,1].unsqueeze(1)
 test_classes_1 =  test_classes[:,0]
@@ -91,7 +90,6 @@ mini_batch_size = 50
 nb_epochs =30
 #print(train_input, train_target)
 for e in range(nb_epochs):
-  
     #print(train_input_1, train_classes_1)
     model, acc_loss = train_model(model, train_input_1, train_classes_1, mini_batch_size)
     acc, output_class_1 = compute_nb_errors(model, test_input_1, test_classes_1, mini_batch_size)
@@ -106,28 +104,33 @@ for e in range(nb_epochs):
     print('acc : ', acc)
     print('----------')
 
-def compute_num_errors(data_input1, data_input2, data_target, mini_batch_size):
+def compute_num_errors(data_ouput, data_target):
   error = 0
-  for b in range(0, data_input.size(0), mini_batch_size): 
-    for i in range(mini_batch_size): 
-      
-      if torch.argmax(output[i]) != data_target[b+i]:
+  for i in range(data_ouput.size(0)): 
+      if data_ouput[i] != data_target[i]:
         error += 1
-  acc = 1 - (error/data_input.size(0))
+  acc = 1 - (error/data_ouput.size(0))
   return acc
 
 def predict_target(data_output1, data_output2):
   output = torch.ones(len(data_output1))
   for i in range(len(data_output1)):
-    #print(data_output1[i])
     if data_output1[i].item() > data_output2[i].item():
         output[i] = 0
     else:
         output[i] = 1
+    
+    print("**",test_classes_1[i], test_classes_2[i], test_target[i])
+    print(data_output1[i].item(), data_output2[i].item(), output[i])
   return output
 
+acc1, output_class_1 = compute_nb_errors(model, test_input_1, test_classes_1, mini_batch_size)
+acc2, output_class_2 = compute_nb_errors(model, test_input_2, test_classes_2, mini_batch_size)
 target_output = predict_target(output_class_1, output_class_2)
-print(target_output, target_output.size())
+print(target_output.size())
+target_acc = compute_num_errors(target_output, test_target)
+print('acc : ', target_acc)
+print('----------')
 
 for e in range(nb_epochs):
     model, acc_loss = train_model(model, train_input_2, train_classes_2, mini_batch_size)
