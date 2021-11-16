@@ -24,9 +24,45 @@ def generate_disc_set(nb):
     # print(label)
     return input, label
 
+def sigmoid(result):
+    for idx,layer in enumerate(result):
+        result[idx] = 1 / (1 + math.exp(-layer))   
+    return result
+
 input, label = generate_disc_set(1000)
 # input = torch.tensor([[0.5, 0.3], [0.1, 0.9]])
 # label = torch.tensor([1, 0])
 test_input, test_label = generate_disc_set(1000)
 
 print('input:', input, ' label:', label)
+
+class Module:
+    def __init__(self, layer = 3, neuron = 25):
+        self.layer = layer
+        self.neu = neuron
+        self.lr = 0.01
+        self.input_shape = 2
+        self.output_shape = 1    
+
+    def init_weight(self):
+        self.weight = []
+        self.weight.append(torch.rand(self.input_shape, self.neu) * 2 - 1)
+        for i in range(1, self.layer):
+            self.weight.append(torch.rand(self.neu+1, self.neu) * 2 - 1)
+        self.weight.append(torch.rand(self.neu+1, self.output_shape) * 2 - 1)
+        # print('weight:', self.weight)
+        # print('weight size:', self.weight[1].size())
+
+    def forward_pass(self, train_data):
+        result = []
+        result.append(torch.mm(train_data.expand(1, -1), self.weight[0]).relu())
+        result[0] = torch.cat((result[0], torch.tensor([[1]])), 1)
+        for idx in range(1, self.layer):
+            result.append(torch.mm(result[idx - 1] ,self.weight[idx]).relu())
+            result[idx] = torch.cat((result[idx], torch.tensor([[1]])), 1)
+        # result.append(torch.mm(result[self.layer-1], self.weight[self.layer]).relu())
+        result.append(sigmoid(torch.mm(result[self.layer-1], self.weight[self.layer])))
+        # print(result[-1])
+        # result[self.layer] = sigmoid(result[self.layer])
+        # print('result:', result)
+        return result
