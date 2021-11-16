@@ -93,16 +93,30 @@ for e in range(nb_epochs):
     #print(train_input_1, train_classes_1)
     model, acc_loss = train_model(model, train_input_1, train_classes_1, mini_batch_size)
     acc, output_class_1 = compute_nb_errors(model, test_input_1, test_classes_1, mini_batch_size)
-    print('epoch :', e, ' loss :', round(acc_loss))
-    print('acc : ', acc)
-    print('----------')
+    # print('epoch :', e, ' loss :', round(acc_loss))
+    # print('acc : ', acc)
+    # print('----------')
+print('test_input_1 acc : ', acc)
+model1 = model #save first input training model
 
+# [Method 1: Train on the same Model] train_input_1 & train_input_2  
 for e in range(nb_epochs):
     model, acc_loss = train_model(model, train_input_2, train_classes_2, mini_batch_size)
     acc, output_class_2 = compute_nb_errors(model, test_input_2, test_classes_2, mini_batch_size)
-    print('epoch :', e, ' loss :', round(acc_loss))
-    print('acc : ', acc)
-    print('----------')
+    # print('epoch :', e, ' loss :', round(acc_loss))
+    # print('acc : ', acc)
+    # print('----------')
+print('test_input_2 acc : ', acc)
+
+# [Method 2: Train on two Models] train_input_1 & train_input_2  
+model2 = Net()
+for e in range(nb_epochs):
+    model2, acc_loss2 = train_model(model2, train_input_2, train_classes_2, mini_batch_size)
+    acc2, output_class2_2 = compute_nb_errors(model2, test_input_2, test_classes_2, mini_batch_size)
+    # print('epoch :', e, ' loss :', round(acc_loss2))
+    # print('acc : ', acc2)
+    # print('----------')
+print('test_input_2 acc : ', acc2)
 
 def compute_num_errors(data_ouput, data_target):
   error = 0
@@ -120,17 +134,25 @@ def predict_target(data_output1, data_output2):
     else:
         output[i] = 1
     
-    print("**",test_classes_1[i], test_classes_2[i], test_target[i])
-    print(data_output1[i].item(), data_output2[i].item(), output[i])
+    #print("**",test_classes_1[i], test_classes_2[i], test_target[i])
+    #print(data_output1[i].item(), data_output2[i].item(), output[i])
   return output
 
+# [Method 1: Train on the same Model] train_input_1 & train_input_2  
 acc1, output_class_1 = compute_nb_errors(model, test_input_1, test_classes_1, mini_batch_size)
 acc2, output_class_2 = compute_nb_errors(model, test_input_2, test_classes_2, mini_batch_size)
 target_output = predict_target(output_class_1, output_class_2)
-print(target_output.size())
+#print(target_output.size())
 target_acc = compute_num_errors(target_output, test_target)
 print('acc : ', target_acc)
-print('----------')
+
+# [Method 2: Train on two Models] train_input_1 & train_input_2  
+acc1, output_class_2_1 = compute_nb_errors(model1, test_input_1, test_classes_1, mini_batch_size)
+acc2, output_class_2_2 = compute_nb_errors(model2, test_input_2, test_classes_2, mini_batch_size)
+target_output2 = predict_target(output_class_2_1, output_class_2_2)
+#print(target_output.size())
+target_acc = compute_num_errors(target_output2, test_target)
+print('acc : ', target_acc)
 
 for e in range(nb_epochs):
     model, acc_loss = train_model(model, train_input_2, train_classes_2, mini_batch_size)
