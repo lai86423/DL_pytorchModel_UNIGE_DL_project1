@@ -29,10 +29,14 @@ def sigmoid(result):
         result[idx] = 1 / (1 + math.exp(-layer))   
     return result
 
-input, label = generate_disc_set(1000)
+def loss(v, t):
+    # print((v - t).pow(2).sum())
+    return (v - t).pow(2).sum()
+
+input, label = generate_disc_set(3)
 # input = torch.tensor([[0.5, 0.3], [0.1, 0.9]])
 # label = torch.tensor([1, 0])
-test_input, test_label = generate_disc_set(1000)
+# test_input, test_label = generate_disc_set(1000)
 
 print('input:', input, ' label:', label)
 
@@ -66,3 +70,13 @@ class Module:
         # result[self.layer] = sigmoid(result[self.layer])
         # print('result:', result)
         return result
+
+acc_loss = 0
+x1 = Module(layer=1, neuron=3)
+x1.init_weight()
+
+    print('epoch:', r)
+    for i in range(len(input)):
+        result = x1.forward_pass(input[i])
+        print(result)
+        acc_loss += loss(label[i], result[-1])
