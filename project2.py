@@ -71,6 +71,31 @@ class Module:
         # print('result:', result)
         return result
 
+    def backward_pass(self, result, target):
+        delta = []
+        # delta.append(target - result[self.layer])
+        # for i in range(result[self.layer].size(1)):
+        #     if result[self.layer][0, i] <= 0:
+        #       delta[0][i] = 0
+        delta_temp = (target - result[self.layer]).mul(result[self.layer].mul(1 - result[self.layer]))
+        delta.append(delta_temp)
+
+        
+        for k in range(self.layer-1, -1, -1):
+            # print('back_lay:', k)
+            # print('delta_0:', delta[0])
+            # print('weight_size:', self.weight[k + 1].size())
+            
+            delta_temp = sigma(delta[0], self.weight[k + 1], result[k + 1])
+            # print(delta_temp)
+            # for i in range(result[k + 1].size(1)):
+            #     if result[k + 1][0, i] < 0:
+            #       delta_temp[i] = 0
+            # print(delta_temp)
+            delta.insert(0, delta_temp)
+            # print('-----')
+        return delta
+
 acc_loss = 0
 x1 = Module(layer=1, neuron=3)
 x1.init_weight()
@@ -80,3 +105,4 @@ x1.init_weight()
         result = x1.forward_pass(input[i])
         print(result)
         acc_loss += loss(label[i], result[-1])
+        delta = x1.backward_pass(result, label[i])
