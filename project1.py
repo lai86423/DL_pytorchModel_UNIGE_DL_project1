@@ -12,6 +12,7 @@ from torch import nn
 from torch.nn import functional as F
 import torch.optim as optim
 import math
+import numpy as np
 
 class Net(nn.Module):
     def __init__(self):
@@ -84,10 +85,16 @@ def compute_nb_errors(model, data_input, data_target, mini_batch_size):
   acc = 1 - (error/data_input.size(0))
   return acc, output_class
 
+import matplotlib.pyplot as plt
+
+def my_plot(epochs, accu):
+    plt.plot(epochs, accu)
+
 model = Net()
 η = 0.002 #If it too big, it will fail!
 mini_batch_size = 50
 nb_epochs =30
+acc_epoch = []
 #print(train_input, train_target)
 for e in range(nb_epochs):
     #print(train_input_1, train_classes_1)
@@ -96,26 +103,61 @@ for e in range(nb_epochs):
     # print('epoch :', e, ' loss :', round(acc_loss))
     # print('acc : ', acc)
     # print('----------')
+    acc_epoch.append(acc)
+# plotting
+my_plot(np.linspace(1, nb_epochs, nb_epochs).astype(int), acc_epoch)
 print('test_input_1 acc : ', acc)
 model1 = model #save first input training model
 
+model = Net()
+η = 0.002 #If it too big, it will fail!
+mini_batch_size = 50
+nb_epochs =30
+acc_epoch = []
+#print(train_input, train_target)
+for e in range(nb_epochs):
+    #print(train_input_1, train_classes_1)
+    model, acc_loss = train_model(model, train_input_1, train_classes_1, mini_batch_size)
+    acc, output_class_1 = compute_nb_errors(model, test_input_1, test_classes_1, mini_batch_size)
+    model, acc_loss = train_model(model, train_input_2, train_classes_2, mini_batch_size)
+    acc, output_class_2 = compute_nb_errors(model, test_input_2, test_classes_2, mini_batch_size)
+    
+    # print('epoch :', e, ' loss :', round(acc_loss))
+    # print('acc : ', acc)
+    # print('----------')
+    acc_epoch.append(acc)
+# plotting
+my_plot(np.linspace(1, nb_epochs, nb_epochs).astype(int), acc_epoch)
+print('test_input_1 acc : ', acc)
+model1 = model #save first input training model
+
+
+
 # [Method 1: Train on the same Model] train_input_1 & train_input_2  
+acc_epoch_2 = []
 for e in range(nb_epochs):
     model, acc_loss = train_model(model, train_input_2, train_classes_2, mini_batch_size)
     acc, output_class_2 = compute_nb_errors(model, test_input_2, test_classes_2, mini_batch_size)
     # print('epoch :', e, ' loss :', round(acc_loss))
     # print('acc : ', acc)
     # print('----------')
+    acc_epoch_2.append(acc)
+# plotting
+my_plot(np.linspace(1, nb_epochs, nb_epochs).astype(int), acc_epoch_2)
 print('test_input_2 acc : ', acc)
 
 # [Method 2: Train on two Models] train_input_1 & train_input_2  
 model2 = Net()
+acc_epoch_3 = []
 for e in range(nb_epochs):
     model2, acc_loss2 = train_model(model2, train_input_2, train_classes_2, mini_batch_size)
     acc2, output_class2_2 = compute_nb_errors(model2, test_input_2, test_classes_2, mini_batch_size)
     # print('epoch :', e, ' loss :', round(acc_loss2))
     # print('acc : ', acc2)
     # print('----------')
+    acc_epoch_3.append(acc2)
+# plotting
+my_plot(np.linspace(1, nb_epochs, nb_epochs).astype(int), acc_epoch_3)
 print('test_input_2 acc : ', acc2)
 
 def compute_num_errors(data_ouput, data_target):
