@@ -13,6 +13,7 @@ from torch.nn import functional as F
 import torch.optim as optim
 import math
 import numpy as np
+import matplotlib.pyplot as plt
 
 class Net(nn.Module):
     def __init__(self):
@@ -31,7 +32,7 @@ class Net(nn.Module):
         # print("x = ",x.size(), x)
         return x
 
-#2 
+η = 0.002
 def train_model(model, train_input, train_target, mini_batch_size):
     # We do this with mini-batches
     criterion = nn.CrossEntropyLoss()
@@ -39,11 +40,7 @@ def train_model(model, train_input, train_target, mini_batch_size):
     # print("Size = ", train_input.size(), train_target.size())
     acc_loss = 0
     for b in range(0, train_input.size(0), mini_batch_size):
-        #--------------
-          # torch.narrow(input, dim, start, length) → Tensor
-        #--------------
-        # print("train_input.narrow",train_input.narrow(0, b, mini_batch_size).size())
-        output = model(train_input.narrow(0, b, mini_batch_size))#表示取出train_input中第0维上索引从b开始到index+mini_batch_size-1的所有元素
+        output = model(train_input.narrow(0, b, mini_batch_size))# torch.narrow(input, dim, start, length) → Tensor #表示取出train_input中第0维上索引从b开始到index+mini_batch_size-1的所有元素
         loss = criterion(output, train_target.narrow(0, b, mini_batch_size))
         acc_loss = acc_loss + loss.item()
         model.zero_grad()
@@ -55,13 +52,14 @@ def train_model(model, train_input, train_target, mini_batch_size):
 import dlc_practical_prologue as prologue
 N = 1000
 data = prologue.generate_pair_sets(N)
+# generate the train and test data sets
 train_data = data[:3]
 test_data = data[3:]
-
 train_input, train_target, train_classes = train_data[0], train_data[1], train_data[2]
 test_input, test_target, test_classes = test_data[0], test_data[1], test_data[2]
 print(train_input.size(), train_target.size(), train_classes.size())
 
+# split data1&2 from data sets
 train_input_1 =  train_input[:,0].unsqueeze(1)
 train_input_2 =  train_input[:,1].unsqueeze(1)
 train_classes_1 =  train_classes[:,0]
@@ -72,12 +70,14 @@ test_classes_1 =  test_classes[:,0]
 test_classes_2 =  test_classes[:,1]
 print(test_input_1.size(), test_classes_1.size(),test_classes_1[1])
 
+# predict grayscale images digit and compute the accuracy.  
 def compute_nb_errors(model, data_input, data_target, mini_batch_size):
   error = 0
   output_class = torch.ones(data_input.size(0))
   for b in range(0, data_input.size(0), mini_batch_size): 
+    # predit ouput from model
     output = model(data_input.narrow(0, b, mini_batch_size))
-    
+    # check predit ouput correction between target ouput 
     for i in range(mini_batch_size): 
       output_class[b+i] = torch.argmax(output[i])
       if output_class[b+i] != data_target[b+i]:
@@ -85,89 +85,7 @@ def compute_nb_errors(model, data_input, data_target, mini_batch_size):
   acc = 1 - (error/data_input.size(0))
   return acc, output_class
 
-import matplotlib.pyplot as plt
-
-def my_plot(epochs, accu):
-    plt.plot(epochs, accu)
-
-model = Net()
-η = 0.002 #If it too big, it will fail!
-mini_batch_size = 50
-nb_epochs =30
-acc_epoch = []
-#print(train_input, train_target)
-for e in range(nb_epochs):
-    #print(train_input_1, train_classes_1)
-    model, acc_loss = train_model(model, train_input_1, train_classes_1, mini_batch_size)
-    acc, output_class_1 = compute_nb_errors(model, test_input_1, test_classes_1, mini_batch_size)
-    # print('epoch :', e, ' loss :', round(acc_loss))
-    # print('acc : ', acc)
-    # print('----------')
-    acc_epoch.append(acc)
-# plotting
-my_plot(np.linspace(1, nb_epochs, nb_epochs).astype(int), acc_epoch)
-print('test_input_1 acc : ', acc)
-model1 = model #save first input training model
-
-model = Net()
-η = 0.002 #If it too big, it will fail!
-mini_batch_size = 50
-nb_epochs =30
-acc_epoch = []
-#print(train_input, train_target)
-for e in range(nb_epochs):
-    #print(train_input_1, train_classes_1)
-    model, acc_loss = train_model(model, train_input_1, train_classes_1, mini_batch_size)
-    acc, output_class_1 = compute_nb_errors(model, test_input_1, test_classes_1, mini_batch_size)
-    model, acc_loss = train_model(model, train_input_2, train_classes_2, mini_batch_size)
-    acc, output_class_2 = compute_nb_errors(model, test_input_2, test_classes_2, mini_batch_size)
-    
-    # print('epoch :', e, ' loss :', round(acc_loss))
-    # print('acc : ', acc)
-    # print('----------')
-    acc_epoch.append(acc)
-# plotting
-my_plot(np.linspace(1, nb_epochs, nb_epochs).astype(int), acc_epoch)
-print('test_input_1 acc : ', acc)
-model1 = model #save first input training model
-
-
-
-# [Method 1: Train on the same Model] train_input_1 & train_input_2  
-acc_epoch_2 = []
-for e in range(nb_epochs):
-    model, acc_loss = train_model(model, train_input_2, train_classes_2, mini_batch_size)
-    acc, output_class_2 = compute_nb_errors(model, test_input_2, test_classes_2, mini_batch_size)
-    # print('epoch :', e, ' loss :', round(acc_loss))
-    # print('acc : ', acc)
-    # print('----------')
-    acc_epoch_2.append(acc)
-# plotting
-my_plot(np.linspace(1, nb_epochs, nb_epochs).astype(int), acc_epoch_2)
-print('test_input_2 acc : ', acc)
-
-# [Method 2: Train on two Models] train_input_1 & train_input_2  
-model2 = Net()
-acc_epoch_3 = []
-for e in range(nb_epochs):
-    model2, acc_loss2 = train_model(model2, train_input_2, train_classes_2, mini_batch_size)
-    acc2, output_class2_2 = compute_nb_errors(model2, test_input_2, test_classes_2, mini_batch_size)
-    # print('epoch :', e, ' loss :', round(acc_loss2))
-    # print('acc : ', acc2)
-    # print('----------')
-    acc_epoch_3.append(acc2)
-# plotting
-my_plot(np.linspace(1, nb_epochs, nb_epochs).astype(int), acc_epoch_3)
-print('test_input_2 acc : ', acc2)
-
-def compute_num_errors(data_ouput, data_target):
-  error = 0
-  for i in range(data_ouput.size(0)): 
-      if data_ouput[i] != data_target[i]:
-        error += 1
-  acc = 1 - (error/data_ouput.size(0))
-  return acc
-
+# predicts for each pair if the first digit is lesser or equal to the second.
 def predict_target(data_output1, data_output2):
   output = torch.ones(len(data_output1))
   for i in range(len(data_output1)):
@@ -180,76 +98,138 @@ def predict_target(data_output1, data_output2):
     #print(data_output1[i].item(), data_output2[i].item(), output[i])
   return output
 
-# [Method 1: Train on the same Model] train_input_1 & train_input_2  
+# compute the accuracy of the prediction for all pairs about if the first digit is lesser or equal to the second.
+def compute_num_errors(data_ouput, data_target):
+  error = 0
+  for i in range(data_ouput.size(0)): 
+      if data_ouput[i] != data_target[i]:
+        error += 1
+  acc = 1 - (error/data_ouput.size(0))
+  return acc
+
+def my_plot(epochs, accu):
+    plt.plot(epochs, accu)
+
+# [Method 1: Train two inputs on the same Model] train_input_1 & train_input_2  
+model = Net()
+η = 0.002 #If it too big, it will fail!
+mini_batch_size = 50
+nb_epochs =30
+acc_epoch = []
+for e in range(nb_epochs):
+    model, acc_loss = train_model(model, train_input_1, train_classes_1, mini_batch_size)
+    acc, output_class_1 = compute_nb_errors(model, test_input_1, test_classes_1, mini_batch_size)
+    model, acc_loss = train_model(model, train_input_2, train_classes_2, mini_batch_size)
+    acc, output_class_2 = compute_nb_errors(model, test_input_2, test_classes_2, mini_batch_size)
+    
+    # print('epoch :', e, ' loss :', round(acc_loss))
+    # print('acc : ', acc)
+    # print('----------')
+    acc_epoch.append(acc)
+# plotting
+my_plot(np.linspace(1, nb_epochs, nb_epochs).astype(int), acc_epoch)
+print('Method 1 digit predit acc : ', acc)
+
+# predicts for each pair if the first digit is lesser or equal to the second
 acc1, output_class_1 = compute_nb_errors(model, test_input_1, test_classes_1, mini_batch_size)
 acc2, output_class_2 = compute_nb_errors(model, test_input_2, test_classes_2, mini_batch_size)
 target_output = predict_target(output_class_1, output_class_2)
 #print(target_output.size())
 target_acc = compute_num_errors(target_output, test_target)
-print('acc : ', target_acc)
+print('Method 1 acc : ', target_acc)
 
-# [Method 2: Train on two Models] train_input_1 & train_input_2  
+# check model information (ie, params)
+from torchsummary import summary
+summary(model, (1, 14, 14))
+
+# [Method 2: Train two inputs on two Models] # for train_input_1 on model1
+model1 = Net()
+η = 0.002 #If it too big, it will fail!
+mini_batch_size = 50
+nb_epochs =30
+acc_epoch = []
+for e in range(nb_epochs):
+    #print(train_input_1, train_classes_1)
+    model1, acc_loss = train_model(model1, train_input_1, train_classes_1, mini_batch_size)
+    acc, output_class_1 = compute_nb_errors(model1, test_input_1, test_classes_1, mini_batch_size)
+    # print('epoch :', e, ' loss :', round(acc_loss))
+    # print('acc : ', acc)
+    # print('----------')
+    acc_epoch.append(acc)
+# plotting
+my_plot(np.linspace(1, nb_epochs, nb_epochs).astype(int), acc_epoch)
+print('Method 2 digit predit for test_input_1 acc : ', acc)
+
+# [Method 2: Train two inputs on two Models] #for train_input_2 on model2
+model2 = Net()
+acc_epoch_3 = []
+for e in range(nb_epochs):
+    model2, acc_loss2 = train_model(model2, train_input_2, train_classes_2, mini_batch_size)
+    acc2, output_class2_2 = compute_nb_errors(model2, test_input_2, test_classes_2, mini_batch_size)
+    # print('epoch :', e, ' loss :', round(acc_loss2))
+    # print('acc : ', acc2)
+    # print('----------')
+    acc_epoch_3.append(acc2)
+# plotting
+my_plot(np.linspace(1, nb_epochs, nb_epochs).astype(int), acc_epoch_3)
+print('Method 2 digit predit for test_input_2 acc : ', acc2)
+
+# predicts for each pair if the first digit is lesser or equal to the second
 acc1, output_class_2_1 = compute_nb_errors(model1, test_input_1, test_classes_1, mini_batch_size)
 acc2, output_class_2_2 = compute_nb_errors(model2, test_input_2, test_classes_2, mini_batch_size)
 target_output2 = predict_target(output_class_2_1, output_class_2_2)
 #print(target_output.size())
 target_acc = compute_num_errors(target_output2, test_target)
-print('acc : ', target_acc)
+print('Method 2 acc : ', target_acc)
 
-for e in range(nb_epochs):
-    model, acc_loss = train_model(model, train_input_2, train_classes_2, mini_batch_size)
-    acc = compute_nb_errors(model, test_input_2, test_classes_2, mini_batch_size)
-    print('epoch :', e, ' loss :', round(acc_loss))
-    print('acc : ', acc)
-    print('----------')
-
-model1 = Net()
-model2 = Net()
-η = 0.2
-mini_batch_size = 2
-nb_epochs = 25
-#print(train_input, train_target)
-for e in range(nb_epochs):
-    print("Data = ", train_data[0].size(), train_data[2].size())
-    model, acc_loss = train_model(model1, train_data[0][0], train_data[2][0], mini_batch_size)
-
-    acc = compute_nb_errors(model, test_input, test_target)
-    print('epoch :', e, ' loss :', round(acc_loss, 3))
-    print('acc : ', acc)
-    print('----------')
-
-for e in range(nb_epochs):
-    model, acc_loss = train_model(model2, train_data[0][1], train_data[2][1], mini_batch_size)
-
-    acc = compute_nb_errors(model, test_input, test_target)
-    print('epoch :', e, ' loss :', round(acc_loss, 3))
-    print('acc : ', acc)
-    print('----------')
-
-class Net2(nn.Module):
+# [Method 3: Compare the accuracy and parameter usage between training on CNN and MLP]
+class MLP_Net(nn.Module):
     def __init__(self):
-        super().__init__()
-        nb_hidden = 200
-        self.conv1 = nn.Conv2d(1, 32, kernel_size=5)
-        self.conv2 = nn.Conv2d(2*32, 2*32, kernel_size=5)
-        self.conv3 = nn.Conv2d(32, 64, kernel_size=2)
-        self.fc1 = nn.Linear(9 * 64, nb_hidden)
-        self.fc2 = nn.Linear(nb_hidden, 10)
-
+          super().__init__()
+          nb_hidden = 500
+          self.fc1 = nn.Linear(14*14, nb_hidden)
+          self.fc2 = nn.Linear(nb_hidden, nb_hidden)
+          self.fc3 = nn.Linear(nb_hidden, 128)
+          self.fc4 = nn.Linear(128, 10)
+          
     def forward(self, x):
-        x1 = x[0]
-        print("x1= ", x1)
-        x1 = F.relu(F.max_pool2d(self.conv1(x1), kernel_size=2))
-        x1 = F.relu(F.max_pool2d(self.conv2(x1), kernel_size=2))
-        x1 = F.relu(self.conv3(x1))
-        x1 = F.relu(self.fc1(x1.view(-1, 9 * 64)))
-        x1 = self.fc2(x1)
-        x2 = x[1]
-        x2 = F.relu(F.max_pool2d(self.conv1(x2), kernel_size=2))
-        x2 = F.relu(F.max_pool2d(self.conv2(x2), kernel_size=2))
-        x2 = F.relu(self.conv3(x2))
-        x2 = F.relu(self.fc1(x2.view(-1, 9 * 64)))
-        x2 = self.fc2(x2)
-        y = [x1, x2]
-        return y
+        x = x.view(-1, 14*14)
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+        x = F.relu(self.fc3(x))
+        x = self.fc4(x)
+        # print("x = ",x.size(), x)
+        return x
 
+def train_model1(model, train_input, train_target, mini_batch_size):
+    # We do this with mini-batches
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.SGD(model.parameters(), lr=η, momentum=0.3)
+    # print("Size = ", train_input.size(), train_target.size())
+    acc_loss = 0
+    for b in range(0, train_input.size(0), mini_batch_size):
+        output = model(train_input.narrow(0, b, mini_batch_size))#表示取出train_input中第0维上索引从b开始到index+mini_batch_size-1的所有元素
+        loss = criterion(output, train_target.narrow(0, b, mini_batch_size))
+        acc_loss = acc_loss + loss.item()
+        model.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+    return model, acc_loss
+
+modelx = MLP_Net()
+η = 0.002 
+mini_batch_size = 50
+nb_epochs =30
+acc_epoch = []
+for e in range(nb_epochs):
+    #print(train_input_1, train_classes_1)
+    modelx, acc_loss = train_model1(modelx, train_input_1[:, 0], train_classes_1, mini_batch_size)
+    acc, output_class_1 = compute_nb_errors(modelx, test_input_1, test_classes_1, mini_batch_size)
+    modelx, acc_loss = train_model1(modelx, train_input_2, train_classes_2, mini_batch_size)
+    acc, output_class_2 = compute_nb_errors(modelx, test_input_2, test_classes_2, mini_batch_size)
+    acc_epoch.append(acc)
+# plotting
+my_plot(np.linspace(1, nb_epochs, nb_epochs).astype(int), acc_epoch)
+print('MLP digit predit acc : ', acc)
+summary(modelx, (1, 14, 14))
