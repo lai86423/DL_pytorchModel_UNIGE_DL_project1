@@ -110,7 +110,7 @@ def compute_num_errors(data_ouput, data_target):
 def my_plot(epochs, accu):
     plt.plot(epochs, accu)
 
-# [Method 1: Train two inputs on the same Model] train_input_1 & train_input_2  
+# [Method 1-1: Train two inputs on the same Model] train_input_1 & train_input_2  
 model = Net()
 η = 0.002 #If it too big, it will fail!
 mini_batch_size = 50
@@ -142,7 +142,7 @@ print('Method 1 acc : ', target_acc)
 from torchsummary import summary
 summary(model, (1, 14, 14))
 
-# [Method 2: Train two inputs on two Models] # for train_input_1 on model1
+# [Method 1-2: Train two inputs on two Models] # for train_input_1 on model1
 model1 = Net()
 η = 0.002 #If it too big, it will fail!
 mini_batch_size = 50
@@ -160,7 +160,7 @@ for e in range(nb_epochs):
 my_plot(np.linspace(1, nb_epochs, nb_epochs).astype(int), acc_epoch)
 print('Method 2 digit predit for test_input_1 acc : ', acc)
 
-# [Method 2: Train two inputs on two Models] #for train_input_2 on model2
+# [Method 1-2: Train two inputs on two Models] #for train_input_2 on model2
 model2 = Net()
 acc_epoch_3 = []
 for e in range(nb_epochs):
@@ -182,7 +182,7 @@ target_output2 = predict_target(output_class_2_1, output_class_2_2)
 target_acc = compute_num_errors(target_output2, test_target)
 print('Method 2 acc : ', target_acc)
 
-# [Method 3: Compare the accuracy and parameter usage between training on CNN and MLP]
+# [Method 2: Compare the accuracy and parameter usage between training on CNN and MLP]
 class MLP_Net(nn.Module):
     def __init__(self):
           super().__init__()
